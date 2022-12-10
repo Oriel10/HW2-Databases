@@ -15,17 +15,113 @@ from Business.Actor import Actor
 
 def createTables():
     # TODO: implement
-    pass
+    conn = None
+    try:
+        conn = Connector.DBConnector()
+        # conn.execute("CREATE TABLE Users(id INTEGER PRIMARY KEY, name TEXT NOT NULL)")
+        conn.execute("CREATE TABLE Critic(\
+            Critic_ID INTEGER PRIMARY KEY,\
+             Name Text NOT NULL)")
+
+        conn.execute("CREATE TABLE Movie(\
+            Movie_Name VARCHAR(255) NOT NULL,\
+            Year Integer NOT NULL,\
+            Genre VARCHAR(6) NOT NULL,\
+            check(Year >= 1895),\
+            UNIQUE(Movie_Name, Year))")
+
+        conn.execute("CREATE TABLE Actor(\
+            Actor_ID Integer NOT NULL,\
+            Name TEXT NOT NULL,\
+            Age Integer NOT NULL,\
+            Height Integer NOT NULL,\
+            check(Actor_ID > 0),\
+            check(Age > 0),\
+            check(Height > 0),\
+            UNIQUE(Actor_ID))")
+
+        conn.execute("CREATE TABLE Studio(\
+            Studio_ID INTEGER NOT NULL,\
+            Name TEXT NOT NULL,\
+            UNIQUE(Studio_ID))")
+
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+    except DatabaseException.NOT_NULL_VIOLATION as e:
+        print(e)
+    except DatabaseException.CHECK_VIOLATION as e:
+        print(e)
+    except DatabaseException.UNIQUE_VIOLATION as e:
+        print(e)
+    except DatabaseException.FOREIGN_KEY_VIOLATION as e:
+        print(e)
+    except Exception as e:
+        print(e)
+    finally:
+        # will happen any way after try termination or exception handling
+        conn.close()
 
 
 def clearTables():
-    # TODO: implement
-    pass
+    conn = None
+    try:
+        conn = Connector.DBConnector()
+        conn.execute("DELETE FROM Critic")
+        conn.execute("DELETE FROM Movie")
+        conn.execute("DELETE FROM Actor")
+        conn.execute("DELETE FROM Studio")
+
+    except DatabaseException.ConnectionInvalid as e:
+        # do stuff
+        print(e)
+    except DatabaseException.NOT_NULL_VIOLATION as e:
+        # do stuff
+        print(e)
+    except DatabaseException.CHECK_VIOLATION as e:
+        # do stuff
+        print(e)
+    except DatabaseException.UNIQUE_VIOLATION as e:
+        # do stuff
+        print(e)
+    except DatabaseException.FOREIGN_KEY_VIOLATION as e:
+        # do stuff
+        print(e)
+    except Exception as e:
+        print(e)
+    finally:
+        # will happen any way after code try termination or exception handling
+        conn.close()
 
 
 def dropTables():
-    # TODO: implement
-    pass
+    conn = None
+    try:
+        conn = Connector.DBConnector()
+        conn.execute("DROP TABLE IF EXISTS Critic CASCADE")
+        conn.execute("DROP TABLE IF EXISTS Movie CASCADE")
+        conn.execute("DROP TABLE IF EXISTS Actor CASCADE")
+        conn.execute("DROP TABLE IF EXISTS Studio CASCADE")
+
+    except DatabaseException.ConnectionInvalid as e:
+        # do stuff
+        print(e)
+    except DatabaseException.NOT_NULL_VIOLATION as e:
+        # do stuff
+        print(e)
+    except DatabaseException.CHECK_VIOLATION as e:
+        # do stuff
+        print(e)
+    except DatabaseException.UNIQUE_VIOLATION as e:
+        # do stuff
+        print(e)
+    except DatabaseException.FOREIGN_KEY_VIOLATION as e:
+        # do stuff
+        print(e)
+    except Exception as e:
+        print(e)
+    finally:
+        # will happen any way after code try termination or exception handling
+        conn.close()
 
 
 def addCritic(critic: Critic) -> ReturnValue:
