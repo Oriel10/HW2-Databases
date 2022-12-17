@@ -33,5 +33,4 @@ class Movie:
         return self.__name == other.__name and self.__year == other.__year and self.__genre == other.__genre
 
     def __str__(self):
-        print("MovieName=" + str(self.__name) + ", Year=" + str(self.__year) + ", Genre=" + str(
-            self.__genre))
+        return str("MovieName=" + str(self.__name) + ", Year=" + str(self.__year) + ", Genre=" + str(self.__genre))

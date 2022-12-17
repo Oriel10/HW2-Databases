@@ -49,6 +49,7 @@ def createTable() -> None:
         print(e)
     except Exception as e:
         print(e)
+        print(e)
     finally:
         # will happen any way after try termination or exception handling
         conn.close()

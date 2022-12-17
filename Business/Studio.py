@@ -25,4 +25,4 @@ class Studio():
         return self.__name == other.__name and self.__id == other.__id
 
     def __str__(self):
-        print("StudioName=" + str(self.__name) + ", StudioID=" + str(self.__id))
+        return str("StudioName=" + str(self.__name) + ", StudioID=" + str(self.__id))

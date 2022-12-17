@@ -24,5 +24,5 @@ class Critic:
         return self.__name == other.__name and self.__id == other.__id
 
     def __str__(self):
-        print("CriticName=" + str(self.__name) + ", CriticID=" + str(self.__id))
+        return str("CriticName=" + str(self.__name) + ", CriticID=" + str(self.__id))
 
