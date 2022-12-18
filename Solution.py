@@ -43,18 +43,18 @@ def createTables():
             Name Text NOT NULL)")
 
         conn.execute("CREATE TABLE Movie(\
-            Movie_Name TEXT NOT NULL,\
-            Year Integer NOT NULL,\
+            Movie_Name TEXT,\
+            Year INTEGER,\
             Genre VARCHAR(6) NOT NULL,\
             check(Year >= 1895),\
             check(Genre = 'Drama' OR Genre = 'Action' OR Genre = 'Comedy' OR Genre = 'Horror'),\
-            UNIQUE(Movie_Name, Year))")
+            PRIMARY KEY(Movie_Name, Year))")
 
         conn.execute("CREATE TABLE Actor(\
-            Actor_ID Integer,\
+            Actor_ID INTEGER,\
             Name TEXT NOT NULL,\
-            Age Integer NOT NULL,\
-            Height Integer NOT NULL,\
+            Age INTEGER NOT NULL,\
+            Height INTEGER NOT NULL,\
             check(Actor_ID > 0),\
             check(Age > 0),\
             check(Height > 0),\
@@ -64,6 +64,46 @@ def createTables():
             Studio_ID INTEGER,\
             Name TEXT NOT NULL,\
             PRIMARY KEY(Studio_ID))")
+
+        conn.execute("CREATE TABLE CriticRating(\
+                    Movie_Name TEXT,\
+                    Year INTEGER,\
+                    Critic_ID INTEGER,\
+                    Rating INTEGER,\
+                    check(1 <= Rating AND Rating <= 5),\
+                    FOREIGN KEY(Movie_Name, Year) REFERENCES Movie(Movie_Name, Year) ON DELETE CASCADE,\
+                    FOREIGN KEY(Critic_ID) REFERENCES Critic(Critic_ID) ON DELETE CASCADE)")
+
+        conn.execute("CREATE TABLE ActorInMovie(\
+                            Movie_Name TEXT,\
+                            Year INTEGER,\
+                            Actor_ID INTEGER,\
+                            Salary INTEGER,\
+                            Num_Roles INTEGER,\
+                            check(0 < Salary),\
+                            check(0 < Num_Roles),\
+                            FOREIGN KEY(Movie_Name, Year) REFERENCES Movie(Movie_Name, Year) ON DELETE CASCADE,\
+                            FOREIGN KEY(Actor_ID) REFERENCES Actor(Actor_ID) ON DELETE CASCADE,\
+                            PRIMARY KEY(Movie_Name, Year, Actor_ID))")
+
+        conn.execute("CREATE TABLE ActorRoleInMovie(\
+                                    Movie_Name TEXT,\
+                                    Year INTEGER,\
+                                    Actor_ID INTEGER,\
+                                    Actor_Role TEXT NOT NULL,\
+                                    FOREIGN KEY(Movie_Name, Year, Actor_ID) REFERENCES ActorInMovie(Movie_Name, Year, Actor_ID) ON DELETE CASCADE)")
+
+        conn.execute("CREATE TABLE StudioProducedMovie(\
+                            Movie_Name TEXT,\
+                            Year INTEGER,\
+                            Studio_ID INTEGER,\
+                            Budget INTEGER,\
+                            Revenue INTEGER,\
+                            check(0 <= Budget),\
+                            check(0 <= Revenue),\
+                            FOREIGN KEY(Movie_Name, Year) REFERENCES Movie(Movie_Name, Year) ON DELETE CASCADE,\
+                            FOREIGN KEY(Studio_ID) REFERENCES Studio(Studio_ID) ON DELETE CASCADE)")
+
 
     except DatabaseException.ConnectionInvalid as e:
         print(e)
@@ -121,6 +161,10 @@ def dropTables():
         conn.execute("DROP TABLE IF EXISTS Movie CASCADE")
         conn.execute("DROP TABLE IF EXISTS Actor CASCADE")
         conn.execute("DROP TABLE IF EXISTS Studio CASCADE")
+        conn.execute("DROP TABLE IF EXISTS CriticRating CASCADE")
+        conn.execute("DROP TABLE IF EXISTS ActorInMovie CASCADE")
+        conn.execute("DROP TABLE IF EXISTS ActorRoleInMovie CASCADE")
+        conn.execute("DROP TABLE IF EXISTS StudioProducedMovie CASCADE")
 
     except DatabaseException.ConnectionInvalid as e:
         # do stuff
@@ -169,7 +213,6 @@ def addCritic(critic: Critic) -> ReturnValue:
         ret_val = ReturnValue.ALREADY_EXISTS
         print(e)
     except DatabaseException.FOREIGN_KEY_VIOLATION as e:
-        ret_val = ReturnValue.ALREADY_EXISTS
         print(e)
     except Exception as e:
         print(e)
@@ -269,7 +312,6 @@ def addActor(actor: Actor) -> ReturnValue:
         ret_val = ReturnValue.ALREADY_EXISTS
         print(e)
     except DatabaseException.FOREIGN_KEY_VIOLATION as e:
-        ret_val = ReturnValue.ALREADY_EXISTS
         print(e)
     except Exception as e:
         print(e)
@@ -366,7 +408,6 @@ def addMovie(movie: Movie) -> ReturnValue:
         ret_val = ReturnValue.ALREADY_EXISTS
         print(e)
     except DatabaseException.FOREIGN_KEY_VIOLATION as e:
-        ret_val = ReturnValue.ALREADY_EXISTS
         print(e)
     except Exception as e:
         print(e)
@@ -465,7 +506,6 @@ def addStudio(studio: Studio) -> ReturnValue:
         ret_val = ReturnValue.ALREADY_EXISTS
         print(e)
     except DatabaseException.FOREIGN_KEY_VIOLATION as e:
-        ret_val = ReturnValue.ALREADY_EXISTS
         print(e)
     except Exception as e:
         print(e)
@@ -537,39 +577,268 @@ def getStudioProfile(studio_id: int) -> Studio:
 
 
 def criticRatedMovie(movieName: str, movieYear: int, criticID: int, rating: int) -> ReturnValue:
-    # TODO: implement
-    pass
+    conn = None
+    rows_effected = 0
+    ret_val = ReturnValue.ERROR
+    try:
+        conn = Connector.DBConnector()
+        query = sql.SQL("INSERT INTO CriticRating(Movie_Name, Year, Critic_ID, Rating) VALUES({name}, {year}, {id}, {rating})").format(
+            name=sql.Literal(movieName),
+            year=sql.Literal(movieYear),
+            id=sql.Literal(criticID),
+            rating=sql.Literal(rating)
+        )
+        rows_effected, _ = conn.execute(query)
+        if rows_effected == 1:
+            ret_val = ReturnValue.OK
+
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+    except DatabaseException.NOT_NULL_VIOLATION as e:
+        print(e)
+    except DatabaseException.CHECK_VIOLATION as e:
+        ret_val = ReturnValue.BAD_PARAMS
+        print(e)
+    except DatabaseException.UNIQUE_VIOLATION as e:
+        ret_val = ReturnValue.ALREADY_EXISTS
+        print(e)
+    except DatabaseException.FOREIGN_KEY_VIOLATION as e:
+        ret_val = ReturnValue.NOT_EXISTS
+        print(e)
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return ret_val
 
 
 def criticDidntRateMovie(movieName: str, movieYear: int, criticID: int) -> ReturnValue:
-    # TODO: implement
-    pass
+    conn = None
+    rows_effected = 0
+    ret_val = ReturnValue.ERROR
+    try:
+        conn = Connector.DBConnector()
+        query = sql.SQL("DELETE FROM CriticRating WHERE Movie_Name={name} AND Year={y} AND Critic_ID={id}").format(
+            name=sql.Literal(movieName),
+            y=sql.Literal(movieYear),
+            id=sql.Literal(criticID)
+        )
+        rows_effected, result = conn.execute(query)
+        if rows_effected == 0:
+            ret_val = ReturnValue.NOT_EXISTS
+        else:
+            ret_val = ReturnValue.OK
 
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+    except DatabaseException.NOT_NULL_VIOLATION as e:
+        print(e)
+    except DatabaseException.CHECK_VIOLATION as e:
+        print(e)
+    except DatabaseException.UNIQUE_VIOLATION as e:
+        print(e)
+    except DatabaseException.FOREIGN_KEY_VIOLATION as e:
+        ret_val = ReturnValue.NOT_EXISTS
+        print(e)
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return ret_val
 
 def actorPlayedInMovie(movieName: str, movieYear: int, actorID: int, salary: int, roles: List[str]) -> ReturnValue:
-    # TODO: implement
-    pass
+    conn = None
+    rows_effected = 0
+    ret_val = ReturnValue.ERROR
+    try:
+        conn = Connector.DBConnector()
+        query = sql.SQL(
+            "INSERT INTO ActorInMovie(Movie_Name, Year, Actor_ID, Salary, Num_Roles) VALUES({name}, {year}, {id}, {salary}, {num_roles});").format(
+            name=sql.Literal(movieName),
+            year=sql.Literal(movieYear),
+            id=sql.Literal(actorID),
+            salary=sql.Literal(salary),
+            num_roles=sql.Literal(len(roles))
+        )
+
+        query += sql.SQL("INSERT INTO ActorRoleInMovie(Movie_Name, Year, Actor_ID, Actor_Role) VALUES")
+        for idx, role in enumerate(roles):
+            query += sql.SQL("({name}, {year}, {id}, {actor_role})").format(
+                name=sql.Literal(movieName),
+                year=sql.Literal(movieYear),
+                id=sql.Literal(actorID),
+                actor_role=sql.Literal(role)
+            )
+            if idx + 1 < len(roles):
+                query += sql.SQL(", ")
+
+        rows_effected, _ = conn.execute(query)
+        if rows_effected == len(roles) + 1:
+            ret_val = ReturnValue.OK
+
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+    except DatabaseException.NOT_NULL_VIOLATION as e:
+        print(e)
+    except DatabaseException.CHECK_VIOLATION as e:
+        ret_val = ReturnValue.BAD_PARAMS
+        print(e)
+    except DatabaseException.UNIQUE_VIOLATION as e:
+        ret_val = ReturnValue.ALREADY_EXISTS
+        print(e)
+    except DatabaseException.FOREIGN_KEY_VIOLATION as e:
+        ret_val = ReturnValue.NOT_EXISTS
+        print(e)
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return ret_val
 
 
 def actorDidntPlayeInMovie(movieName: str, movieYear: int, actorID: int) -> ReturnValue:
-    # TODO: implement
-    pass
+    conn = None
+    rows_effected = 0
+    ret_val = ReturnValue.ERROR
+    try:
+        conn = Connector.DBConnector()
+        query = sql.SQL("DELETE FROM ActorInMovie WHERE Movie_Name={name} AND Year={y} AND Actor_ID={id}").format(
+            name=sql.Literal(movieName),
+            y=sql.Literal(movieYear),
+            id=sql.Literal(actorID)
+        )
+        rows_effected, result = conn.execute(query)
+        if rows_effected > 0:
+            ret_val = ReturnValue.OK
+        else:
+            ret_val = ReturnValue.NOT_EXISTS
+
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+    except DatabaseException.NOT_NULL_VIOLATION as e:
+        print(e)
+    except DatabaseException.CHECK_VIOLATION as e:
+        print(e)
+    except DatabaseException.UNIQUE_VIOLATION as e:
+        print(e)
+    except DatabaseException.FOREIGN_KEY_VIOLATION as e:
+        ret_val = ReturnValue.NOT_EXISTS
+        print(e)
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return ret_val
 
 
 def studioProducedMovie(studioID: int, movieName: str, movieYear: int, budget: int, revenue: int) -> ReturnValue:
-    # TODO: implement
-    pass
+    conn = None
+    rows_effected = 0
+    ret_val = ReturnValue.ERROR
+    try:
+        conn = Connector.DBConnector()
+        query = sql.SQL(
+            "INSERT INTO StudioProducedMovie(Movie_Name, Year, Studio_ID, Budget, Revenue) VALUES({name}, {year}, {id}, {budget}, {revenue})").format(
+            name=sql.Literal(movieName),
+            year=sql.Literal(movieYear),
+            id=sql.Literal(studioID),
+            budget=sql.Literal(budget),
+            revenue=sql.Literal(revenue)
+        )
+        rows_effected, _ = conn.execute(query)
+        if rows_effected == 1:
+            ret_val = ReturnValue.OK
+
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+    except DatabaseException.NOT_NULL_VIOLATION as e:
+        print(e)
+    except DatabaseException.CHECK_VIOLATION as e:
+        ret_val = ReturnValue.BAD_PARAMS
+        print(e)
+    except DatabaseException.UNIQUE_VIOLATION as e:
+        ret_val = ReturnValue.ALREADY_EXISTS
+        print(e)
+    except DatabaseException.FOREIGN_KEY_VIOLATION as e:
+        ret_val = ReturnValue.NOT_EXISTS
+        print(e)
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return ret_val
 
 
 def studioDidntProduceMovie(studioID: int, movieName: str, movieYear: int) -> ReturnValue:
-    # TODO: implement
-    pass
+    conn = None
+    rows_effected = 0
+    ret_val = ReturnValue.ERROR
+    try:
+        conn = Connector.DBConnector()
+        query = sql.SQL("DELETE FROM StudioProducedMovie WHERE Movie_Name={name} AND Year={y} AND Studio_ID={id}").format(
+            name=sql.Literal(movieName),
+            y=sql.Literal(movieYear),
+            id=sql.Literal(studioID)
+        )
+        rows_effected, result = conn.execute(query)
+        if rows_effected == 0:
+            ret_val = ReturnValue.NOT_EXISTS
+        else:
+            ret_val = ReturnValue.OK
+
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+    except DatabaseException.NOT_NULL_VIOLATION as e:
+        print(e)
+    except DatabaseException.CHECK_VIOLATION as e:
+        print(e)
+    except DatabaseException.UNIQUE_VIOLATION as e:
+        print(e)
+    except DatabaseException.FOREIGN_KEY_VIOLATION as e:
+        ret_val = ReturnValue.NOT_EXISTS
+        print(e)
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return ret_val
 
 
 # ---------------------------------- BASIC API: ----------------------------------
 def averageRating(movieName: str, movieYear: int) -> float:
-    # TODO: implement
-    pass
+    conn = None
+    res_val = 0
+    try:
+        conn = Connector.DBConnector()
+        query = sql.SQL(
+            "SELECT COALESCE(AVG(Rating), 0)\
+             FROM CriticRating\
+             WHERE Movie_Name={name} AND Year={y}").format(
+            name=sql.Literal(movieName),
+            y=sql.Literal(movieYear)
+        )
+        rows_effected, result = conn.execute(query)
+        assert (result.size() == 1)
+        res_val = result.rows[0][0] #TODO: find out what to return here - result.rows[0] is the tuple (Decimal('num'),)
+
+        # print("result: ", result)
+        # print("res_val: ", (res_val))
+
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+    except DatabaseException.NOT_NULL_VIOLATION as e:
+        print(e)
+    except DatabaseException.CHECK_VIOLATION as e:
+        print(e)
+    except DatabaseException.UNIQUE_VIOLATION as e:
+        print(e)
+    except DatabaseException.FOREIGN_KEY_VIOLATION as e:
+        print(e)
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return res_val
 
 
 def averageActorRating(actorID: int) -> float:

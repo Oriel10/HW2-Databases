@@ -73,14 +73,14 @@ class Test(AbstractTest):
         invalid_movie2 = Movie(movie_name=None, year="1996", genre="Action")
         self.assertEqual(ReturnValue.BAD_PARAMS, Solution.addMovie(invalid_movie2), "invalid movie_name")
 
-        wolfie = Movie(movie_name="Wolf of Wallstreet", year=2012, genre="Drama")
-        self.assertEqual(ReturnValue.OK, Solution.addMovie(wolfie), "should work")
+        django = Movie(movie_name="Django", year=2009, genre="Drama")
+        self.assertEqual(ReturnValue.OK, Solution.addMovie(django), "should work")
 
         # getMovieProfile
-        self.assertEqual(Movie.badMovie(), Solution.getMovieProfile("Wolf of Wallstreet", "2021"), "get non existing profile")
-        self.assertEqual(wolfie, Solution.getMovieProfile("Wolf of Wallstreet", 2012), "get existing profile")
-        # print("solution: ", type(Solution.getMovieProfile("Wolf of Wallstreet", "2012").getYear()))
-        # print("wolfie: ", type(wolfie.getYear()))
+        self.assertEqual(Movie.badMovie(), Solution.getMovieProfile(movie_name="Django", year="2010"), "get non existing profile")
+        self.assertEqual(django, Solution.getMovieProfile(movie_name="Django", year=2009), "get existing profile")
+        # print("solution: ", type(Solution.getMovieProfile("Django", "2009").getYear()))
+        # print("django: ", type(django.getYear()))
 
         #deletion
         self.assertEqual(ReturnValue.NOT_EXISTS, Solution.deleteMovie("Wolf of Wallstreet", 1999), "deleting non existing movie")
@@ -107,6 +107,77 @@ class Test(AbstractTest):
         # getCriticProfile
         self.assertEqual(Studio.badStudio(), Solution.getStudioProfile(3), "get non existing profile")
         self.assertEqual(haifa_studio, Solution.getStudioProfile(2), "get existing profile")
+
+
+    #my tests
+    def testCriticRatedMovie(self) -> None:
+
+        oriel = Critic(critic_id=123, critic_name="Oriel")
+        self.assertEqual(ReturnValue.OK, Solution.addCritic(oriel), "valid critic3")
+
+        tal = Critic(critic_id=124, critic_name="Tal")
+        self.assertEqual(ReturnValue.OK, Solution.addCritic(tal), "valid critic4")
+
+        wolfie = Movie(movie_name="Wolf of Wallstreet", year=2012, genre="Drama")
+        self.assertEqual(ReturnValue.OK, Solution.addMovie(wolfie), "should work")
+
+        self.assertEqual(ReturnValue.OK, Solution.criticRatedMovie('Wolf of Wallstreet', 2012, 123, 5), "legit critic rating")
+        self.assertEqual(ReturnValue.BAD_PARAMS, Solution.criticRatedMovie('Wolf of Wallstreet', 2012, 124, 6), "bad params cause of rating=6")
+        self.assertEqual(ReturnValue.OK, Solution.criticRatedMovie('Wolf of Wallstreet', 2012, 124, 4), "legit critic rating")
+        self.assertEqual(ReturnValue.NOT_EXISTS, Solution.criticRatedMovie('Wolf of Wallstreet', 20121, 113124, 4), "not exist - foreign key problem")
+
+
+    def testCriticDidntRateMovie(self) -> None:
+
+        oriel = Critic(critic_id=123, critic_name="Oriel")
+        self.assertEqual(ReturnValue.OK, Solution.addCritic(oriel), "valid critic3")
+
+        tal = Critic(critic_id=124, critic_name="Tal")
+        self.assertEqual(ReturnValue.OK, Solution.addCritic(tal), "valid critic4")
+
+        wolfie = Movie(movie_name="Wolf of Wallstreet", year=2012, genre="Drama")
+        self.assertEqual(ReturnValue.OK, Solution.addMovie(wolfie), "should work")
+
+        self.assertEqual(ReturnValue.OK, Solution.criticRatedMovie(movieName='Wolf of Wallstreet', movieYear=2012, criticID=123, rating=5), "legit critic rating")
+        self.assertEqual(ReturnValue.OK, Solution.criticRatedMovie(movieName='Wolf of Wallstreet', movieYear=2012, criticID=124, rating=3), "legit critic rating")
+
+        self.assertEqual(ReturnValue.OK, Solution.criticDidntRateMovie(movieName='Wolf of Wallstreet', movieYear=2012, criticID=124), "legit critic deleting")
+        self.assertEqual(ReturnValue.NOT_EXISTS, Solution.criticDidntRateMovie(movieName='Wolf of Wallstreet', movieYear=2012, criticID=124), "not exist deleting")
+
+    def testAverageRating(self) -> None:
+        self.assertEqual(0, Solution.averageRating("Forrest Gump", 1994), "no movie")
+
+        #add movie
+        forrest_gump = Movie(movie_name="Forrest Gump", year=1994, genre="Drama")
+        self.assertEqual(ReturnValue.OK, Solution.addMovie(forrest_gump), "should work")
+
+        self.assertEqual(0, Solution.averageRating("Forrest Gump", 1994), "no ratings")
+
+        #create critics
+        critic1000 = Critic(critic_id=1000, critic_name="critic1000")
+        self.assertEqual(ReturnValue.OK, Solution.addCritic(critic1000), "valid critic3")
+        critic1001 = Critic(critic_id=1001, critic_name="critic1001")
+        self.assertEqual(ReturnValue.OK, Solution.addCritic(critic1001), "valid critic3")
+        critic1002 = Critic(critic_id=1002, critic_name="critic1002")
+        self.assertEqual(ReturnValue.OK, Solution.addCritic(critic1002), "valid critic3")
+        critic1003 = Critic(critic_id=1003, critic_name="critic1003")
+        self.assertEqual(ReturnValue.OK, Solution.addCritic(critic1003), "valid critic3")
+
+        #add ratings
+        self.assertEqual(ReturnValue.OK, Solution.criticRatedMovie('Forrest Gump', 1994, 1000, 5), "legit rating")
+        self.assertEqual(ReturnValue.OK, Solution.criticRatedMovie('Forrest Gump', 1994, 1001, 4), "legit rating")
+        self.assertEqual(ReturnValue.OK, Solution.criticRatedMovie('Forrest Gump', 1994, 1002, 5), "legit rating")
+        self.assertEqual(ReturnValue.OK, Solution.criticRatedMovie('Forrest Gump', 1994, 1003, 5), "legit rating")
+
+        self.assertEqual(4.75, Solution.averageRating("Forrest Gump", 1994), "rating is (5+4+5+5)/4 = 4.75")
+
+
+
+
+
+
+
+
 
 
 # *** DO NOT RUN EACH TEST MANUALLY ***
