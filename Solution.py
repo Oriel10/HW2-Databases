@@ -131,23 +131,14 @@ def createTables():
                         ON M.Movie_Name = SPM.Movie_Name AND M.Year = SPM.Year")
 
         conn.execute("CREATE VIEW MovieTotalNumRoles AS \
-                            SELECT AIM.Movie_Name, AIM.Year, SUM(Num_Roles) as Num_Roles\
-                            FROM ActorInMovie AS AIM\
-                            GROUP BY AIM.Movie_Name, AIM.Year")
+                        SELECT AIM.Movie_Name, AIM.Year, SUM(Num_Roles) as Num_Roles\
+                        FROM ActorInMovie AS AIM\
+                        GROUP BY AIM.Movie_Name, AIM.Year")
 
-
-
-        # conn.execute("CREATE VIEW MovieAverageRating AS(\
-        #                             Movie_Name TEXT,\
-        #                             Year INTEGER,\
-        #                             Studio_ID INTEGER,\
-        #                             Budget INTEGER NOT NULL,\
-        #                             Revenue INTEGER NOT NULL,\
-        #                             check(0 <= Budget),\
-        #                             check(0 <= Revenue),\
-        #                             PRIMARY KEY(Movie_Name, Year, Studio_ID),\
-        #                             FOREIGN KEY(Movie_Name, Year) REFERENCES Movie(Movie_Name, Year) ON DELETE CASCADE,\
-        #                             FOREIGN KEY(Studio_ID) REFERENCES Studio(Studio_ID) ON DELETE CASCADE)")
+        conn.execute("CREATE VIEW ActorInGenre AS \
+                        SELECT DISTINCT AIM.Actor_ID, Name, Age, Height, Genre\
+                        FROM Movie M, ActorInMovie AIM, Actor A\
+                        WHERE M.Movie_Name = AIM.Movie_Name AND M.Year = AIM.Year AND AIM.Actor_ID = A.Actor_ID")
 
 
     except DatabaseException.ConnectionInvalid as e:
@@ -215,6 +206,7 @@ def dropTables():
         conn.execute("DROP VIEW IF EXISTS MovieAverageRating")
         conn.execute("DROP VIEW IF EXISTS MovieBudget")
         conn.execute("DROP VIEW IF EXISTS MovieTotalNumRoles")
+        conn.execute("DROP VIEW IF EXISTS ActorInGenre")
 
     except DatabaseException.ConnectionInvalid as e:
         # do stuff
@@ -1028,18 +1020,18 @@ def overlyInvestedInMovie(movie_name: str, movie_year: int, actor_id: int) -> bo
     res_val = False
     try:
         conn = Connector.DBConnector()
-        query = sql.SQL(
-            "SELECT AIM.Actor_ID\
-             FROM ActorInMovie AS AIM\
-             WHERE AIM.Movie_Name={movie_name} AND AIM.Year={movie_year} AND AIM.Actor_ID={actor_id} AND 2*AIM.Num_Roles\
-                  >= (SELECT MTNR.Num_Roles FROM MovieTotalNumRoles AS MTNR\
-                  WHERE MTNR.Movie_Name={movie_name} AND MTNR.Year={movie_year})").format(
+        query = sql.SQL("SELECT AIM.Actor_ID\
+                         FROM ActorInMovie AS AIM\
+                         WHERE AIM.Movie_Name={movie_name} AND AIM.Year={movie_year} AND AIM.Actor_ID={actor_id} AND\
+                         2*AIM.Num_Roles >= (SELECT MTNR.Num_Roles FROM MovieTotalNumRoles AS MTNR\
+                         WHERE MTNR.Movie_Name={movie_name} AND MTNR.Year={movie_year})").format(
+
             movie_name=sql.Literal(movie_name),
             movie_year=sql.Literal(movie_year),
             actor_id=sql.Literal(actor_id)
         )
 
-        rows_effected, result = conn.execute(query,printSchema=True)
+        rows_effected, result = conn.execute(query)
         res_val = 1 == rows_effected
 
     except DatabaseException.ConnectionInvalid as e:
@@ -1082,7 +1074,7 @@ def franchiseRevenue() -> List[Tuple[str, int]]:
 
         rows_effected, result = conn.execute(query)
 
-        res_list = [(result[i]['movie_name'], result[i]['total_revenue']) for i in range(result.size())]
+        res_list = [(result[i]['Movie_Name'], result[i]['total_revenue']) for i in range(result.size())]
 
     except DatabaseException.ConnectionInvalid as e:
         print(e)
@@ -1101,22 +1093,133 @@ def franchiseRevenue() -> List[Tuple[str, int]]:
         return res_list
 
 def studioRevenueByYear() -> List[Tuple[str, int]]:
-    # TODO: implement
-    pass
+    conn = None
+    res_list = []
+    try:
+        conn = Connector.DBConnector()
+        query = sql.SQL("SELECT SPM.Studio_ID, SPM.Year, SUM(SPM.Revenue) as total_revenue\
+                         FROM StudioProducedMovie as SPM\
+                         GROUP BY SPM.Studio_ID, SPM.Year\
+                         ORDER BY SPM.Studio_ID DESC, SPM.Year DESC")
+        rows_effected, result = conn.execute(query)
+
+        res_list = [(result[i]['Studio_ID'], result[i]['Year'], result[i]['total_revenue']) for i in range(result.size())]
+
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+    except DatabaseException.NOT_NULL_VIOLATION as e:
+        print(e)
+    except DatabaseException.CHECK_VIOLATION as e:
+        print(e)
+    except DatabaseException.UNIQUE_VIOLATION as e:
+        print(e)
+    except DatabaseException.FOREIGN_KEY_VIOLATION as e:
+        print(e)
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return res_list
 
 
 def getFanCritics() -> List[Tuple[int, int]]:
-    # TODO: implement
-    pass
+    conn = None
+    res_list = []
+    try:
+        conn = Connector.DBConnector()
+        query = sql.SQL("SELECT C.Critic_ID, S.Studio_ID\
+                        FROM Critic C, Studio S\
+                        WHERE NOT EXISTS\
+                            (SELECT *\
+                             FROM StudioProducedMovie SPM1\
+                             WHERE Studio_ID = S.Studio_ID AND (SPM1.Movie_Name, SPM1.Year) NOT IN\
+                                (SELECT CR.Movie_Name, CR.Year FROM CriticRating CR\
+                                    WHERE CR.Critic_ID = C.Critic_ID)) AND\
+                        EXISTS (SELECT * FROM StudioProducedMovie SPM2 WHERE SPM2.Studio_ID = S.Studio_ID)\
+                        ORDER BY Critic_ID DESC ,Studio_ID DESC")
+
+        rows_effected, result = conn.execute(query)
+
+        res_list = [(result[i]['Critic_ID'], result[i]['Studio_ID']) for i in range(result.size())]
+
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+    except DatabaseException.NOT_NULL_VIOLATION as e:
+        print(e)
+    except DatabaseException.CHECK_VIOLATION as e:
+        print(e)
+    except DatabaseException.UNIQUE_VIOLATION as e:
+        print(e)
+    except DatabaseException.FOREIGN_KEY_VIOLATION as e:
+        print(e)
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return res_list
 
 
 def averageAgeByGenre() -> List[Tuple[str, float]]:
-    # TODO: implement
-    pass
+    conn = None
+    res_list = []
+    try:
+        conn = Connector.DBConnector()
+        query = sql.SQL("SELECT AIG.Genre, AVG(AIG.Age) as average_age\
+                         FROM ActorInGenre AIG\
+                         GROUP BY AIG.Genre\
+                         ORDER BY AIG.Genre")
+
+        rows_effected, result = conn.execute(query)
+
+        res_list = [(result[i]['Genre'], result[i]['average_age']) for i in range(result.size())]
+
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+    except DatabaseException.NOT_NULL_VIOLATION as e:
+        print(e)
+    except DatabaseException.CHECK_VIOLATION as e:
+        print(e)
+    except DatabaseException.UNIQUE_VIOLATION as e:
+        print(e)
+    except DatabaseException.FOREIGN_KEY_VIOLATION as e:
+        print(e)
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return res_list
 
 
-def getExclusiveActors() -> List[Tuple[int, int]]:
-    # TODO: implement
-    pass
+def getExclusiveActors(print = False) -> List[Tuple[int, int]]:
+    conn = None
+    res_list = []
+    try:
+        conn = Connector.DBConnector()
+        query = sql.SQL("SELECT AIM1.Actor_ID, SPM1.Studio_ID\
+                         FROM ActorInMovie AIM1, StudioProducedMovie SPM1\
+                         WHERE AIM1.Movie_Name=SPM1.Movie_Name AND AIM1.Year=SPM1.Year AND\
+                            NOT EXISTS(SELECT *\
+                                       FROM ActorInMovie AIM2, StudioProducedMovie SPM2\
+                                       WHERE AIM2.Movie_Name=SPM2.Movie_Name AND AIM2.Year=SPM2.Year\
+                                           AND AIM1.Actor_ID=AIM2.Actor_ID AND SPM1.Studio_ID<>SPM2.Studio_ID)\
+                         ORDER BY AIM1.Actor_ID DESC")
 
-# GOOD LUCK!
+        rows_effected, result = conn.execute(query, printSchema=print)
+
+        res_list = [(result[i]['Actor_ID'], result[i]['Studio_ID']) for i in range(result.size())]
+
+    except DatabaseException.ConnectionInvalid as e:
+        print(e)
+    except DatabaseException.NOT_NULL_VIOLATION as e:
+        print(e)
+    except DatabaseException.CHECK_VIOLATION as e:
+        print(e)
+    except DatabaseException.UNIQUE_VIOLATION as e:
+        print(e)
+    except DatabaseException.FOREIGN_KEY_VIOLATION as e:
+        print(e)
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return res_list
