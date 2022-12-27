@@ -150,7 +150,7 @@ class Test(AbstractTest):
     #     self.assertEqual(ReturnValue.OK, Solution.criticDidntRateMovie(movieName='Wolf of Wallstreet', movieYear=2012, criticID=124), "legit critic deleting")
     #     self.assertEqual(ReturnValue.NOT_EXISTS, Solution.criticDidntRateMovie(movieName='Wolf of Wallstreet', movieYear=2012, criticID=124), "not exist deleting")
     #
-    def testAverageRating(self) -> None:
+    # def testAverageRating(self) -> None:
         # self.assertEqual(0, Solution.averageRating("Forrest Gump", 1994), "no movie")
 
         #add movie
@@ -177,15 +177,15 @@ class Test(AbstractTest):
         #                                                              ['Forrest', 'Main Role', 'Role3']), "legit acting")
 
         #create critics
-        critic1000 = Critic(critic_id=1000, critic_name="critic1000")
-        self.assertEqual(ReturnValue.OK, Solution.addCritic(critic1000), "valid critic3")
-        critic1001 = Critic(critic_id=1001, critic_name="critic1001")
-        self.assertEqual(ReturnValue.OK, Solution.addCritic(critic1001), "valid critic3")
-        critic1002 = Critic(critic_id=1002, critic_name="critic1002")
-        self.assertEqual(ReturnValue.OK, Solution.addCritic(critic1002), "valid critic3")
-        critic1003 = Critic(critic_id=1003, critic_name="critic1003")
-        self.assertEqual(ReturnValue.OK, Solution.addCritic(critic1003), "valid critic3")
-        #
+        # critic1000 = Critic(critic_id=1000, critic_name="critic1000")
+        # self.assertEqual(ReturnValue.OK, Solution.addCritic(critic1000), "valid critic3")
+        # critic1001 = Critic(critic_id=1001, critic_name="critic1001")
+        # self.assertEqual(ReturnValue.OK, Solution.addCritic(critic1001), "valid critic3")
+        # critic1002 = Critic(critic_id=1002, critic_name="critic1002")
+        # self.assertEqual(ReturnValue.OK, Solution.addCritic(critic1002), "valid critic3")
+        # critic1003 = Critic(critic_id=1003, critic_name="critic1003")
+        # self.assertEqual(ReturnValue.OK, Solution.addCritic(critic1003), "valid critic3")
+        # #
         #add ratings
         # self.assertEqual(ReturnValue.OK, Solution.criticRatedMovie('Forrest Gump', 1994, 1000, 5), "legit rating")
         # self.assertEqual(ReturnValue.OK, Solution.criticRatedMovie('Forrest Gump', 1994, 1001, 4), "legit rating")
@@ -205,30 +205,34 @@ class Test(AbstractTest):
         # float_res = Solution.bestPerformance(2001)
         # print("float_res: ", float_res)
 
-    # def testActorPlayedInMovie(self) -> None:
-    #     top = Actor(actor_id=2000, actor_name="Tom Hanks", age=60, height=183)
-    #     self.assertEqual(ReturnValue.OK, Solution.addActor(top), "should work")
-    #
-        # jake = Actor(actor_id=2001, actor_name="Jake", age=48, height=183)
-        # self.assertEqual(ReturnValue.OK, Solution.addActor(jake), "should work")
-    #
-    #     forrest_gump = Movie(movie_name="Forrest Gump", year=1994, genre="Drama")
-    #     self.assertEqual(ReturnValue.OK, Solution.addMovie(forrest_gump), "should work")
-    #
-    #     prisoners = Movie(movie_name="Prisoners", year=2012, genre="Drama")
-    #     self.assertEqual(ReturnValue.OK, Solution.addMovie(prisoners), "should work")
-    #
-        # self.assertEqual(ReturnValue.OK, Solution.actorPlayedInMovie('Forrest Gump', 1994, 2000, 100000, ['Forrest', 'Main Role', 'Role3']), "legit acting")
-    #     self.assertEqual(ReturnValue.ALREADY_EXISTS, Solution.actorPlayedInMovie('Forrest Gump', 1994, 2000, 100000, ['Forrest', 'Main Role']), "already exist acting")
-    #     self.assertEqual(ReturnValue.BAD_PARAMS, Solution.actorPlayedInMovie('Prisoners', 2012, 2001, -10, ["Role1", 'Role2']), "bad params - negative salary")
-    #     self.assertEqual(ReturnValue.BAD_PARAMS, Solution.actorPlayedInMovie('Prisoners', 2012, 2001, -10, []), "bad params - empty list")
-    #     self.assertEqual(ReturnValue.OK, Solution.actorPlayedInMovie('Prisoners', 2012, 2001, 200000, ["Role1", 'Role2', 'Role3']), "legit acting")
-    #
-    #     self.assertEqual(ReturnValue.NOT_EXISTS, Solution.actorPlayedInMovie('Avatar', 2012, 2001, 100000, ["Role1", 'Role2']), "no such movie")
-    #
-    #
-    #     self.assertEqual(ReturnValue.NOT_EXISTS, Solution.actorDidntPlayeInMovie('Avatar', 2012, 2001), "actor didnt play")
-    #     self.assertEqual(ReturnValue.OK, Solution.actorDidntPlayeInMovie('Prisoners', 2012, 2001), "delete actor played")
+    def testActorPlayedInMovie(self) -> None:
+        top = Actor(actor_id=2000, actor_name="Tom Hanks", age=60, height=183)
+        self.assertEqual(ReturnValue.OK, Solution.addActor(top), "should work")
+
+        jake = Actor(actor_id=2001, actor_name="Jake", age=48, height=183)
+        self.assertEqual(ReturnValue.OK, Solution.addActor(jake), "should work")
+
+        forrest_gump = Movie(movie_name="Forrest Gump", year=1994, genre="Drama")
+        self.assertEqual(ReturnValue.OK, Solution.addMovie(forrest_gump), "should work")
+
+        prisoners = Movie(movie_name="Prisoners", year=2012, genre="Drama")
+        self.assertEqual(ReturnValue.OK, Solution.addMovie(prisoners), "should work")
+
+        self.assertEqual(ReturnValue.OK, Solution.actorPlayedInMovie('Forrest Gump', 1994, 2000, 100000, ['Forrest', 'Main Role', 'Role3']), "legit acting")
+        self.assertEqual(ReturnValue.ALREADY_EXISTS, Solution.actorPlayedInMovie('Forrest Gump', 1994, 2000, 100000, ['Forrest', 'Main Role']), "already exist acting")
+        self.assertEqual(ReturnValue.BAD_PARAMS, Solution.actorPlayedInMovie('Prisoners', 2012, 2001, -10, ["Role1", 'Role2']), "bad params - negative salary")
+        self.assertEqual(ReturnValue.BAD_PARAMS, Solution.actorPlayedInMovie('Prisoners', 2012, 2001, -10, []), "bad params - empty list")
+        self.assertEqual(ReturnValue.OK, Solution.actorPlayedInMovie('Prisoners', 2012, 2001, 200000, ["Role1", 'Role2', 'Role3']), "legit acting")
+
+        self.assertEqual(ReturnValue.NOT_EXISTS, Solution.actorPlayedInMovie('Avatar', 2012, 2001, 100000, ["Role1", 'Role2']), "no such movie")
+
+
+        self.assertEqual(ReturnValue.NOT_EXISTS, Solution.actorDidntPlayInMovie('Avatar', 2012, 2001), "actor didnt play")
+        self.assertEqual(ReturnValue.OK, Solution.actorDidntPlayInMovie('Prisoners', 2012, 2001), "delete actor played")
+
+        self.assertEqual(['Role3', 'Main Role', 'Forrest'], Solution.getActorsRoleInMovie(2000, 'Forrest Gump', 1994), "legit roles")
+
+
 
     # def testStudioProducedMovie(self) -> None:
     #     studio1 = Studio(studio_id=3000, studio_name="Studio1")
@@ -260,30 +264,30 @@ class Test(AbstractTest):
     #     spiderman = Movie(movie_name="Spiderman", year=2006, genre="Action")
     #     self.assertEqual(ReturnValue.OK, Solution.addMovie(spiderman), "should work")
 
-    def testStageCrewBudget(self):
-        spiderman = Movie(movie_name="Spiderman", year=2006, genre="Action")
-        self.assertEqual(ReturnValue.OK, Solution.addMovie(spiderman), "should work")
-
-        superman = Movie(movie_name="Superman", year=2007, genre="Action")
-        self.assertEqual(ReturnValue.OK, Solution.addMovie(superman), "should work")
-
-        studio1 = Studio(studio_id=3000, studio_name="Studio1")
-        self.assertEqual(ReturnValue.OK, Solution.addStudio(studio1), "should work")
-        self.assertEqual(ReturnValue.OK, Solution.studioProducedMovie(3000, "Spiderman", 2006, 70000, 150), "legit")
-        # self.assertEqual(ReturnValue.OK, Solution.studioProducedMovie(3000, "Spiderman", 2006, 100, 150), "legit")
-
-        jake1 = Actor(actor_id=2001, actor_name="Jake", age=48, height=183)
-        self.assertEqual(ReturnValue.OK, Solution.addActor(jake1), "should work")
-        jake2 = Actor(actor_id=2002, actor_name="Jake", age=48, height=183)
-        self.assertEqual(ReturnValue.OK, Solution.addActor(jake2), "should work")
-
-        self.assertEqual(ReturnValue.OK, Solution.actorPlayedInMovie('Spiderman', 2006, 2001, 20000,
-                                                                     ['Forrest', 'Main Role', 'Role3']), "legit acting")
-        self.assertEqual(ReturnValue.OK, Solution.actorPlayedInMovie('Spiderman', 2006, 2002, 30000,
-                                                                     ['Forrest', 'Main Role', 'Role3']), "legit acting")
-
-        res = Solution.stageCrewBudget('Spiderman', 2006)
-        print('The Result: ', res)
+    # def testStageCrewBudget(self):
+    #     spiderman = Movie(movie_name="Spiderman", year=2006, genre="Action")
+    #     self.assertEqual(ReturnValue.OK, Solution.addMovie(spiderman), "should work")
+    #
+    #     superman = Movie(movie_name="Superman", year=2007, genre="Action")
+    #     self.assertEqual(ReturnValue.OK, Solution.addMovie(superman), "should work")
+    #
+    #     studio1 = Studio(studio_id=3000, studio_name="Studio1")
+    #     self.assertEqual(ReturnValue.OK, Solution.addStudio(studio1), "should work")
+    #     self.assertEqual(ReturnValue.OK, Solution.studioProducedMovie(3000, "Spiderman", 2006, 70000, 150), "legit")
+    #     # self.assertEqual(ReturnValue.OK, Solution.studioProducedMovie(3000, "Spiderman", 2006, 100, 150), "legit")
+    #
+    #     jake1 = Actor(actor_id=2001, actor_name="Jake", age=48, height=183)
+    #     self.assertEqual(ReturnValue.OK, Solution.addActor(jake1), "should work")
+    #     jake2 = Actor(actor_id=2002, actor_name="Jake", age=48, height=183)
+    #     self.assertEqual(ReturnValue.OK, Solution.addActor(jake2), "should work")
+    #
+    #     self.assertEqual(ReturnValue.OK, Solution.actorPlayedInMovie('Spiderman', 2006, 2001, 20000,
+    #                                                                  ['Forrest', 'Main Role', 'Role3']), "legit acting")
+    #     self.assertEqual(ReturnValue.OK, Solution.actorPlayedInMovie('Spiderman', 2006, 2002, 30000,
+    #                                                                  ['Forrest', 'Main Role', 'Role3']), "legit acting")
+    #
+    #     res = Solution.stageCrewBudget('Spiderman', 2006)
+    #     print('The Result: ', res)
 
 
 
